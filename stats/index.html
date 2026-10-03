@@ -1,0 +1,52 @@
+<!DOCTYPE html><html lang="en" data-root="../"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Statistics · Cricket DB</title>
+<link rel="stylesheet" href="../style.css"></head><body>
+<header><div class="in"><nav><a href="../index.html">Home</a><a href="../players/index.html">Players</a><a href="../records/index.html">Records</a><a href="../stats/index.html" class=on>Statistics</a><a href="../quant/index.html">Quant</a><a href="../teams/index.html">Teams</a><a href="../events/index.html">Tournaments</a><a href="../matches/index.html">Matches</a></nav>
+<div style="position:relative;flex:1"><input id="q" type="search" placeholder="Search players, teams, tournaments…" autocomplete="off"><div id="results"></div></div></div></header>
+<main><div class=card><h1>Statistics</h1><h2 style="border:0;margin-top:.4rem">T20 statistics</h2><div class=sub>14,594 matches, 2005–2026. <details class=note style="display:inline;margin:0"><summary>About the data</summary><p>The Hundred (100 balls a side) is its own type, excluded unless selected.</p></details></div><div class=fbar><label class=fl>T20 type<select id=sf-f><option value="">All T20 cricket (excl. The Hundred)</option><option value="T20I">T20I</option><option value="IT20">T20I (associate)</option><option value="T20">T20 (domestic)</option><option value="HUN">The Hundred</option></select></label><label class=fl>Gender<select id=sf-g><option value="">Men &amp; women</option><option value="male">Men</option><option value="female">Women</option></select></label><label class=fl>Tournament<select id=sf-e><option value="">All tournaments</option></select></label><label class=fl>Group by<select id=sf-p><option value="1">Year</option><option value="2">2 years</option><option value="5">5 years</option></select></label><button id=sf-x type=button class=reset>Reset</button><span id=sf-n class="small count"></span></div><div id=skpi class=kpis></div><h2>Year by year</h2><div id=stab></div><h2>Venues</h2><p class=small>Venues with 15+ decided matches, most bat-first-friendly first.</p><div id=sven></div></div><script src=index.js></script><script>var CFG={"fm": ["T20I", "IT20", "T20", "HUN"], "def": ["T20I", "IT20", "T20"], "test": false, "thr": 180, "thrBy": {"HUN": 150}};(function(){var RAW=window.SD||[],SC=window.SC||{},SV=window.SV||{},D=[],FM=CFG.fm,DEF=CFG.def,TEST=CFG.test,THR=CFG.thr;
+for(var k=0;k<RAW.length;k+=8)D.push([RAW[k]+2000,FM[RAW[k+1]],RAW[k+2]?'female':'male',RAW[k+3],RAW[k+4],RAW[k+5],RAW[k+6]<0?null:RAW[k+6],RAW[k+7]]);
+var F=document.getElementById('sf-f'),G=document.getElementById('sf-g'),E=document.getElementById('sf-e'),P=document.getElementById('sf-p'),N=document.getElementById('sf-n');
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+function pc(a,b){return b?Math.round(1000*a/b)/10:null}
+function okf(f,m){return f?m[1]===f:DEF.indexOf(m[1])>=0}
+function sel(){var f=F.value,g=G.value,e=E.value,r=[];for(var i=0;i<D.length;i++){var m=D[i];if(!okf(f,m)||(g&&m[2]!==g)||(e&&String(m[3])!==e))continue;r.push(m)}return r}
+function fill(){var f=F.value,g=G.value,cnt={};for(var i=0;i<D.length;i++){var m=D[i];if(!okf(f,m)||(g&&m[2]!==g)||!m[3])continue;cnt[m[3]]=(cnt[m[3]]||0)+1}
+var ids=Object.keys(cnt).sort(function(a,b){return cnt[b]-cnt[a]||(SC[a]<SC[b]?-1:1)}),cur=E.value,h='<option value="">All tournaments ('+ids.length+')</option>';
+ids.forEach(function(id){h+='<option value="'+id+'"'+(id===cur?' selected':'')+'>'+esc(SC[id])+' ('+cnt[id]+')</option>'});E.innerHTML=h;if(cur&&!cnt[cur])E.value=''}
+function bucket(y,p){return p===1?y:Math.floor(y/p)*p}
+function blabel(b,p){return p===1?String(b):b+'–'+String(b+p-1).slice(2)}
+/* per period: n, bf (bat-first won), ch (bowl-first won), tie (tie, or draw in red-ball), nr, toss: tf chose field / tb chose bat / tw decided with toss / tww toss winner won, fr first-innings totals, nT/dT totals >= THR and defended */
+function agg(r){var p=+P.value,by={};r.forEach(function(m){var b=bucket(m[0],p),a=by[b];if(!a)a=by[b]={b:b,n:0,bf:0,ch:0,tie:0,nr:0,tf:0,tb:0,tw:0,tww:0,fr:[],dT:0,nT:0};
+a.n++;if(m[4]===1)a.bf++;else if(m[4]===0)a.ch++;else if(m[4]===2)a.tie++;else a.nr++;
+if(m[5]>=0){if(m[5]===1)a.tf++;else a.tb++;if(m[4]<2){a.tw++;if((m[5]===0&&m[4]===1)||(m[5]===1&&m[4]===0))a.tww++}}
+if(m[6]!=null&&(TEST?m[4]<3:m[4]<2)){a.fr.push(m[6]);if(THR&&m[6]>=THR){a.nT++;if(m[4]===1)a.dT++}}});
+return Object.keys(by).map(function(k){return by[k]}).sort(function(x,y){return x.b-y.b})}
+function den(x){return TEST?x.bf+x.ch+x.tie:x.bf+x.ch}
+function avg(a){if(!a.length)return null;var t=0;a.forEach(function(x){t+=x});return Math.round(t/a.length)}
+function pbar(w){return '<div style="display:flex;gap:.5rem;align-items:center"><div class=bar><i style="width:'+(w||0)+'%"></i></div><span class=small>'+(w==null?'–':w+'%')+'</span></div>'}
+function render(){THR=CFG.thrBy[F.value]||CFG.thr;var r=sel(),a=agg(r),p=+P.value;
+var dec=0,bf=0,ch=0,dr=0,tf=0,tn=0,tww=0,tw=0,frs=[],nT=0,dT=0;a.forEach(function(x){dec+=den(x);bf+=x.bf;ch+=x.ch;dr+=x.tie;tf+=x.tf;tn+=x.tf+x.tb;tww+=x.tww;tw+=x.tw;frs=frs.concat(x.fr);nT+=x.nT;dT+=x.dT});
+N.textContent=r.length+' matches';
+var k='';
+if(r.length){k='<div class=kpi><b>'+(pc(bf,dec)||0)+'%</b><span>won batting first</span></div><div class=kpi><b>'+(pc(ch,dec)||0)+'%</b><span>'+(TEST?'won bowling first':'won chasing')+'</span></div>';
+if(TEST)k+='<div class=kpi><b>'+(pc(dr,dec)||0)+'%</b><span>drawn</span></div><div class=kpi><b>'+(pc(tn-tf,tn)||0)+'%</b><span>toss winners chose to bat</span></div>';
+else k+='<div class=kpi><b>'+(pc(tf,tn)||0)+'%</b><span>toss winners chose to bowl</span></div>';
+k+='<div class=kpi><b>'+(pc(tww,tw)||0)+'%</b><span>toss winners won</span></div><div class=kpi><b>'+(avg(frs)||'–')+'</b><span>avg first-innings score</span></div>';
+if(!TEST)k+='<div class=kpi><b>'+(pc(dT,nT)||0)+'%</b><span>of '+THR+'+ totals defended</span></div>'}
+document.getElementById('skpi').innerHTML=k||'<p class=small>No matches for this selection.</p>';
+var lb=function(x){return blabel(x.b,p)};
+var t='<div class=wrap><table><tr><th>Period</th><th class=n>Matches</th><th class=n>Bat first won</th><th class=n>'+(TEST?'Bowl first won':'Chasing won')+'</th><th class=n>'+(TEST?'Drawn':'Tie / NR')+'</th><th>Bat-first win %</th><th class=n>'+(TEST?'Chose to bat':'Chose to bowl')+'</th><th class=n>Avg 1st inns</th>'+(TEST?'':'<th class=n>'+THR+'+ defended</th>')+'</tr>';
+a.slice().reverse().forEach(function(x){var d=den(x),w=pc(x.bf,d),tp=TEST?pc(x.tb,x.tf+x.tb):pc(x.tf,x.tf+x.tb);t+='<tr><td>'+lb(x)+'</td><td class=n>'+x.n+'</td><td class=n>'+x.bf+'</td><td class=n>'+x.ch+'</td><td class=n>'+(TEST?x.tie:x.tie+x.nr)+'</td><td>'+pbar(w)+'</td><td class=n>'+(tp==null?'–':tp+'%')+'</td><td class=n>'+(avg(x.fr)||'–')+'</td>'+(TEST?'':'<td class=n>'+(x.nT?x.dT+'/'+x.nT:'–')+'</td>')+'</tr>'});
+document.getElementById('stab').innerHTML=a.length?t+'</table></div>':'';
+var vs={};r.forEach(function(m){if(!m[7]||m[4]>(TEST?2:1))return;var v=vs[m[7]]||(vs[m[7]]={n:0,bf:0,ch:0,fr:[]});v.n++;if(m[4]===1)v.bf++;else if(m[4]===0)v.ch++;if(m[6]!=null)v.fr.push(m[6])});
+var vl=Object.keys(vs).filter(function(k){return vs[k].n>=15}).sort(function(a,b){return vs[b].bf/vs[b].n-vs[a].bf/vs[a].n});
+var vh='<div class=wrap><table><tr><th>Venue</th><th class=n>'+(TEST?'Completed':'Decided')+'</th><th class=n>Bat first won</th><th class=n>'+(TEST?'Bowl first won':'Chasing won')+'</th>'+(TEST?'<th class=n>Drawn</th>':'')+'<th>Bat-first win %</th><th class=n>Avg 1st inns</th></tr>';
+vl.forEach(function(k){var v=vs[k],w=pc(v.bf,v.n);vh+='<tr><td>'+esc(SV[k]||'?')+'</td><td class=n>'+v.n+'</td><td class=n>'+v.bf+'</td><td class=n>'+v.ch+'</td>'+(TEST?'<td class=n>'+(v.n-v.bf-v.ch)+'</td>':'')+'<td>'+pbar(w)+'</td><td class=n>'+(avg(v.fr)||'–')+'</td></tr>'});
+document.getElementById('sven').innerHTML=vl.length?vh+'</table></div>':'<p class=small>No venue has 15 '+(TEST?'completed':'decided')+' matches in this selection.</p>';
+var hs=[];if(F.value)hs.push('f='+F.value);if(G.value)hs.push('g='+G.value);if(E.value)hs.push('e='+E.value);if(P.value!=='1')hs.push('p='+P.value);history.replaceState(null,'',hs.length?'#'+hs.join('&'):location.pathname)}
+F.onchange=G.onchange=function(){fill();render()};E.onchange=P.onchange=render;
+document.getElementById('sf-x').onclick=function(){F.value=G.value=E.value='';P.value='1';fill();render()};
+var hp={};location.hash.slice(1).split('&').forEach(function(kv){var i=kv.indexOf('=');if(i>0)hp[kv.slice(0,i)]=decodeURIComponent(kv.slice(i+1))});
+if(hp.f)F.value=hp.f;if(hp.g)G.value=hp.g;if(hp.p)P.value=hp.p;fill();if(hp.e&&SC[hp.e])E.value=hp.e;render()})();</script></main>
+<footer>Data: <a href="https://cricsheet.org">Cricsheet</a> (ball-by-ball, CC BY 4.0), <a href="https://www.wikidata.org">Wikidata</a> and <a href="https://en.wikipedia.org">Wikipedia</a> (CC BY-SA). Last data update: 2026-09-18.</footer>
+<script src="../search.js"></script></body></html>
